@@ -1,0 +1,130 @@
+name: "CraftEvent"
+
+# Permission required to take part in this event
+permission: ""
+
+# Minimum amount of players online required to start the event
+min-players: 2
+
+# Time players have to complete the event in seconds
+duration: 600
+
+# How many times should the event be announced
+announcements: 3
+
+# Delay between announcements in seconds
+announcement-interval: 20
+
+# List of items that must be crafted in this event
+# id: Slimefun id of the item
+# amount: Number of times the item must be crafted
+sf-items-to-craft:
+  1:
+    id: "MAGNET"
+    amount: 2
+  2:
+    id: "ELECTRO_MAGNET"
+    amount: 5
+  3:
+    id: "GRANDMAS_WALKING_STICK"
+    amount: 2
+  4:
+    id: "PORTABLE_DUSTBIN"
+    amount: 4
+  5:
+    id: "PORTABLE_CRAFTER"
+    amount: 3
+
+# If enabled, the order of items in 'sf-items-to-craft' will be randomized
+random-order: false
+
+# If enabled, players must complete the previous item in the list before they can advance to the next item
+craft-in-order: false
+
+randomization:
+  # If enabled, 'sf-items-to-craft' will act as a pool of possible items to craft
+  # A subset of these items will be selected randomly for the event
+  enabled: false
+
+  # Number of items to select from the pool defined in 'sf-items-to-craft'
+  # Only applicable if 'randomization.enabled' is true
+  # If set to 0, the number of items to pick will be chosen randomly.
+  items-to-pick: 0
+
+# List of commands that will be executed on the winner
+commands-on-winner:
+  - "give %player% 1 diamond"
+
+boss-bar:
+  enabled: true
+
+  # Title of the boss bar
+  # @name - replaced by the event name
+  title: "@name"
+
+  # Color of the boss bar
+  # Available options are: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  color: "WHITE"
+
+  # Style of the boss bar
+  # Available options are: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
+  style: "SOLID"
+
+messages:
+  announce:
+    - ""
+    - "&b[@name] - Starting in &e@time &bseconds!"
+    - ""
+
+  start:
+    - ""
+    - "&b[@name] - Event started!"
+    - "&b[@name] - You have &e@time &bseconds to craft the items!"
+    - ""
+
+  finish:
+    - ""
+    - "&b[@name] - Event finished!"
+    - "&b[@name] - Winner: &a@winner"
+    - ""
+
+  finish-no-winners:
+    - ""
+    - "&b[@name] - Event finished with no winners!"
+    - ""
+
+  cancelled:
+    - ""
+    - "&b[@name] - Event cancelled!"
+    - ""
+
+  not-enough-players:
+    - ""
+    - "&b[@name] - &cEvent cancelled! Not enough players."
+    - "&b[@name] - Players online: @online"
+    - "&b[@name] - Players required to start the event: @required"
+    - ""
+
+  # Configurations for the message that is used to show which items must be crafted to win the event
+  items-to-craft:
+
+    # This header will be used when the option 'craft-in-order' is disabled
+    header:
+      - ""
+      - "&b[@name] - Items that must be crafted:"
+
+    # This header will be used when the option 'craft-in-order' is enabled
+    header-in-order:
+      - ""
+      - "&b[@name] - Items that must be crafted in the exact listed order:"
+
+    # Defines the format used to display each item in the list after the header.
+    # Placeholders available:
+    #   @index - Position of the item in the list
+    #   @item - Display name of the item
+    #   @amount - Amount of the item that must be crafted
+    item-line-format:
+      - "&b@index - @item &fx@amount"
+
+# Do not change it
+event-type: "CRAFT_EVENT"

@@ -1,0 +1,17 @@
+settings:
+  auto-update: true
+  debug: false
+
+# If enabled, events will start automatically
+scheduler:
+  enabled: true
+  events:
+    1:
+      name:
+      frequency:
+
+
+list:
+  - ""
+  - ""
+  - ""
