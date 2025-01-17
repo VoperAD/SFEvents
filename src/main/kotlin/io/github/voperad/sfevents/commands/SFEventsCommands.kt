@@ -19,6 +19,7 @@ object SFEventsCommands: BaseCommand() {
 
     @Subcommand("reload")
     @CommandPermission("sfevents.admin.reload")
+    @Description("Reloads all events files")
     fun reload(sender: CommandSender) {
         EventsFilesManager.loadEventsConfigurations()
     }
@@ -26,6 +27,7 @@ object SFEventsCommands: BaseCommand() {
     @Subcommand("event create")
     @CommandCompletion("@eventtype @nothing")
     @CommandPermission("sfevents.admin.createevent")
+    @Description("Creates a new event given an event type")
     fun createEvent(sender: CommandSender, eventType: EventType, @Single @Conditions("unique-file-name") fileName: String) {
         EventsFilesManager.createEvent(fileName, eventType)?.let {
             sender.sendMessage("${ChatColor.GREEN}Event \"$fileName\" created!")
@@ -36,6 +38,7 @@ object SFEventsCommands: BaseCommand() {
     @CommandCompletion("@events")
     @CommandPermission("sfevents.admin.startevent")
     @Conditions("not-happening")
+    @Description("Starts the given event")
     fun startEvent(sender: CommandSender, @Single @Conditions("valid-event") name: String) {
         sender.sendMessage("${ChatColor.GREEN}Event $name started!")
         EventManager.startEvent(name)
@@ -44,6 +47,7 @@ object SFEventsCommands: BaseCommand() {
     @Subcommand("event cancel")
     @CommandPermission("sfevents.admin.cancelevent")
     @Conditions("happening")
+    @Description("If there is an event running, cancels it")
     fun stopEvent(sender: CommandSender) {
         sender.sendMessage("${ChatColor.GREEN}Cancelling event ${EventManager.currentEvent?.config?.file?.nameWithoutExtension}...")
         EventManager.cancelEvent()
