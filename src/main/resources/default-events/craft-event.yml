@@ -53,7 +53,7 @@ randomization:
 
 # List of commands that will be executed on the winner
 commands-on-winner:
-  - "give %player% 1 diamond"
+  - "give %player_name% diamond 1"
 
 boss-bar:
   enabled: true
