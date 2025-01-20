@@ -20,7 +20,7 @@ announcement-interval: 20
 # amount: Number of times the item must be crafted
 sf-items-to-craft:
   1:
-    id: "MAGNET"
+    id: "CAN"
     amount: 2
   2:
     id: "ELECTRO_MAGNET"
