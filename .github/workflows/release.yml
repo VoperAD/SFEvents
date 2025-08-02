@@ -1,0 +1,65 @@
+name: Release
+on:
+  workflow_run:
+    workflows:
+      - Java CI
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: adopt
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          skip-version-file: true
+          skip-commit: true
+          skip-tag: true
+          git-push: false
+
+      - name: Update version in build.gradle and push changes
+        if: steps.changelog.outputs.skipped == 'false'
+        run: |
+          NEW_VERSION=${{ steps.changelog.outputs.version }}
+          sed -i "s/version = .*/version = \"$NEW_VERSION\"/" build.gradle.kts
+          git commit -am "chore(release): version ${{ steps.changelog.outputs.tag }} [skip ci]"
+          git tag -a ${{ steps.changelog.outputs.tag }} -m "${{ steps.changelog.outputs.tag }}"
+          git push origin main --follow-tags
+
+      - name: Generate JAR
+        run: ./gradlew clean build
+
+      - name: Create release with last commit
+        if: steps.changelog.outputs.skipped == 'false'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.changelog.outputs.tag }}
+          name: ${{ steps.changelog.outputs.tag }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          artifacts: "build/libs/SFEvents-${{ steps.changelog.outputs.version }}.jar"
+
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'The triggering workflow failed'
