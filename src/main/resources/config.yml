@@ -5,13 +5,9 @@ settings:
 # If enabled, events will start automatically
 scheduler:
   enabled: true
+  # For the frequency, use a quartz cron syntax
+  # frequency: "0 0 * * *" Every day at midnight
   events:
     1:
-      name:
-      frequency:
-
-
-list:
-  - ""
-  - ""
-  - ""
+      name: craft-event
+      frequency: "0 50 22 * * ?" # Every day at 22:50

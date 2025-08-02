@@ -8,6 +8,8 @@ import io.github.voperad.sfevents.events.Top
 import io.github.voperad.sfevents.managers.EventManager
 import io.github.voperad.sfevents.managers.EventType
 import io.github.voperad.sfevents.managers.EventsFilesManager
+import io.github.voperad.sfevents.managers.SchedulerManager
+import io.github.voperad.sfevents.pluginInstance
 import net.md_5.bungee.api.ChatColor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -24,7 +26,9 @@ object SFEventsCommands: BaseCommand() {
     @CommandPermission("sfevents.admin.reload")
     @Description("Reloads all events files")
     fun reload(sender: CommandSender) {
+        pluginInstance.reloadConfig()
         EventsFilesManager.loadEventsConfigurations()
+        SchedulerManager.loadEvents()
     }
 
     @Subcommand("event create")

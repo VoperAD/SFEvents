@@ -36,6 +36,7 @@ dependencies {
     implementation("org.bstats:bstats-bukkit:3.0.2")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
     implementation("io.github.seggan:sf4k:0.4.1")
+    implementation("com.cronutils:cron-utils:9.2.1")
     libraryAndTest("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC2")
 }
 

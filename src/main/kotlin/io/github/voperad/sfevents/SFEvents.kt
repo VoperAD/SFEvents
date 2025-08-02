@@ -6,6 +6,8 @@ import com.github.shynixn.mccoroutine.bukkit.ticks
 import io.github.seggan.sf4k.AbstractAddon
 import io.github.voperad.sfevents.managers.CommandManager
 import io.github.voperad.sfevents.managers.EventsFilesManager
+import io.github.voperad.sfevents.managers.SchedulerManager
+import io.github.voperad.sfevents.tasks.EventSchedulerTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
@@ -25,11 +27,13 @@ class SFEvents : AbstractAddon() {
 
         EventsFilesManager.loadEventsConfigurations()
         CommandManager.setup()
+        SchedulerManager.loadEvents()
 
         startMetrics()
     }
 
     override suspend fun onDisableAsync() {
+        EventSchedulerTask.stop()
     }
 
     override fun getJavaPlugin(): JavaPlugin = this
@@ -56,7 +60,7 @@ fun info(message: String) = log(Level.INFO, message)
 
 fun debug(message: String) {
     if (pluginInstance.config.getBoolean("settings.debug", false)) {
-        info(message)
+        info("[DEBUG] $message")
     }
 }
 
