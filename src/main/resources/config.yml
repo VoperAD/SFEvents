@@ -5,7 +5,7 @@ settings:
 # If enabled, events will start automatically
 scheduler:
   enabled: true
-  # For the frequency, use a quartz cron syntax
+  # For the frequency, use the quartz cron syntax
   # frequency: "0 0 * * *" Every day at midnight
   events:
     1:

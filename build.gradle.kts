@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.voperad"
-version = "MODIFIED"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
