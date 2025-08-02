@@ -3,11 +3,14 @@ package io.github.voperad.sfevents.commands
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.CommandHelp
 import co.aikar.commands.annotation.*
+import io.github.voperad.sfevents.events.Progressable
+import io.github.voperad.sfevents.events.Top
 import io.github.voperad.sfevents.managers.EventManager
 import io.github.voperad.sfevents.managers.EventType
 import io.github.voperad.sfevents.managers.EventsFilesManager
 import net.md_5.bungee.api.ChatColor
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 
 @CommandAlias("sfevents|sfev|sfe")
 object SFEventsCommands: BaseCommand() {
@@ -53,11 +56,28 @@ object SFEventsCommands: BaseCommand() {
         EventManager.cancelEvent()
     }
 
-    @Subcommand("configurations")
-    fun listConfigurations(sender: CommandSender) {
-        EventsFilesManager.configurations.forEach {
-            sender.sendMessage("${ChatColor.GREEN}${it.file.nameWithoutExtension}")
+    @Subcommand("event progress")
+    @CommandPermission("sfevents.anyone.seeprogress")
+    @Conditions("happening")
+    @Description("Shows the player's progress in the current event")
+    fun showProgress(player: Player) {
+        val event = EventManager.currentEvent as? Progressable ?: run {
+            player.sendMessage("${ChatColor.RED}This command cannot be executed for this event")
+            return
         }
+        event.sendPlayerProgress(player)
+    }
+
+    @Subcommand("event top")
+    @CommandPermission("sfevents.anyone.eventtop")
+    @Conditions("happening")
+    @Description("Shows the top players in the current event")
+    fun showTopPlayers(sender: CommandSender) {
+        val event = EventManager.currentEvent as? Top ?: run {
+            sender.sendMessage("${ChatColor.RED}This command cannot be executed for this event")
+            return
+        }
+        event.sendEventTop(sender)
     }
 
 }

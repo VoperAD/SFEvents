@@ -2,16 +2,20 @@ package io.github.voperad.sfevents.events
 
 import io.github.thebusybiscuit.slimefun4.api.events.MultiBlockCraftEvent
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem
-import io.github.voperad.sfevents.*
+import io.github.voperad.sfevents.debug
 import io.github.voperad.sfevents.events.configs.CraftEventConfiguration
 import io.github.voperad.sfevents.events.configs.ItemToCraft
+import io.github.voperad.sfevents.log
 import io.github.voperad.sfevents.managers.EventManager
+import io.github.voperad.sfevents.pluginInstance
+import io.github.voperad.sfevents.secondsToTicks
 import io.github.voperad.sfevents.util.ChatUtils
 import kotlinx.coroutines.delay
 import me.clip.placeholderapi.PlaceholderAPI
 import net.md_5.bungee.api.ChatColor
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.HandlerList
@@ -25,7 +29,7 @@ import kotlin.random.Random
 
 private typealias CEC = CraftEventConfiguration
 
-class CraftEvent(config: CEC): BaseEvent<CEC>(config), Listener {
+class CraftEvent(config: CEC): BaseEvent<CEC>(config), Listener, Progressable, Top {
 
     private val playersProgress = mutableMapOf<UUID, MutableMap<String, Int>>()
     private var itemsToCraftInfo: List<String>
@@ -58,7 +62,6 @@ class CraftEvent(config: CEC): BaseEvent<CEC>(config), Listener {
             while (remainingTime > 0 && isActive) {
                 remainingTime -= 1.secondsToTicks()
                 bossBar?.progress = remainingTime.toDouble() / config.duration.secondsToTicks()
-                debug("Remaining time: $remainingTime")
                 delay(1.secondsToTicks())
             }
             val finishTime = System.nanoTime()
@@ -79,7 +82,7 @@ class CraftEvent(config: CEC): BaseEvent<CEC>(config), Listener {
         }
 
         isActive = false
-        jobs.forEach { it.cancel() }
+        jobs.toList().forEach { it.cancel() }
         HandlerList.unregisterAll(this)
         EventManager.currentEvent = null
         bossBar?.removeAll()
@@ -129,8 +132,6 @@ class CraftEvent(config: CEC): BaseEvent<CEC>(config), Listener {
                 }
             }
         }
-
-        playerInfo()
     }
 
     private fun setupRandomization() {
@@ -163,40 +164,37 @@ class CraftEvent(config: CEC): BaseEvent<CEC>(config), Listener {
         return result
     }
 
-    // TODO: remove it later, this is only for debugging
-    private fun playerInfo() {
-        playersProgress.forEach { (uuid, map) ->
-            info("Player ${Bukkit.getPlayer(uuid)?.name}")
-            map.forEach {
-                info("${it.key}: ${it.value}")
-            }
-            info("\n")
-        }
-    }
-
-    private fun isTargetItem(item: ItemStack): Pair<SlimefunItem, ItemToCraft>? {
+    private fun isTargetItem(item: ItemStack): TargetItemCraftedInfo? {
         return SlimefunItem.getByItem(item)?.let { sfItem ->
             itemsToCraft.firstOrNull { it.id == sfItem.id }?.let { itemToCraft ->
-                sfItem to itemToCraft
+                TargetItemCraftedInfo(sfItem, itemToCraft, item.amount)
             }
         }
     }
 
-    private fun addProgress(player: Player, itemPair: Pair<SlimefunItem, ItemToCraft>) {
+    private fun addProgress(player: Player, targetItemCraftedInfo: TargetItemCraftedInfo) {
         initPlayerProgress(player)
-        val itemToCraft = itemPair.second
+        val itemToCraft = targetItemCraftedInfo.itemToCraft
 
         if (config.craftInOrder && !canProgress(player, itemToCraft.id)) {
             return
         }
 
         val progress = playersProgress[player.uniqueId] ?: return
-        if (progress[itemToCraft.id]!! >= itemToCraft.amount) {
-            player.sendMessage("${ChatColor.AQUA}You have already crafted ${itemToCraft.amount} ${itemPair.first.itemName}")
+        val itemProgress: () -> Int = { progress[itemToCraft.id] ?: 0 }
+
+        if (itemProgress() >= itemToCraft.amount) {
+            player.sendMessage("${ChatColor.AQUA}You have already crafted ${itemProgress()} ${targetItemCraftedInfo.slimefunItem.itemName}")
             return
         }
 
-        progress.computeIfPresent(itemToCraft.id) { _, amount -> amount + 1 }
+        progress.computeIfPresent(itemToCraft.id) { _, amount ->
+            val sum = amount + targetItemCraftedInfo.amount
+            debug("addProgress(${player.name}) -> ${itemToCraft.id}: [$amount -> $sum]")
+            if (sum >= itemToCraft.amount) itemToCraft.amount else sum
+        }
+
+        debug("Current progress for ${player.name}: ${itemProgress()}")
     }
 
     private fun initPlayerProgress(player: Player) {
@@ -249,6 +247,44 @@ class CraftEvent(config: CEC): BaseEvent<CEC>(config), Listener {
             player to percentage
         }.sortedByDescending { it.second }
     }
+
+    override fun sendPlayerProgress(playerName: Player) {
+        playersProgress[playerName.uniqueId]?.let { progressMap ->
+            val totalItems = itemsToCraft.sumOf { it.amount }
+            val totalProgress = progressMap.values.sum()
+            var percentage = (totalProgress * 100.0) / totalItems
+            percentage = (percentage * 100.0).roundToInt() / 100.0
+
+            playerName.sendMessage("${ChatColor.GREEN}Your progress: $percentage%")
+            itemsToCraft.forEach { item ->
+                val itemProgress = progressMap[item.id] ?: 0
+
+                val sfItem = SlimefunItem.getById(item.id) ?: run {
+                    playerName.sendMessage("${ChatColor.RED}Item ${item.id} not found!")
+                    return@forEach
+                }
+
+                playerName.sendMessage("${sfItem.itemName}: ${ChatColor.AQUA}$itemProgress/${item.amount}")
+            }
+
+        } ?: playerName.sendMessage("${ChatColor.RED}You have no progress in this event.")
+    }
+
+    override fun sendEventTop(commandSender: CommandSender) {
+        getPlayersProgress().forEachIndexed { index, (player, percentage) ->
+            player.name?.let { name ->
+                commandSender.sendMessage(
+                    "${ChatColor.GOLD}${index + 1}. ${ChatColor.YELLOW}$name: ${ChatColor.AQUA}$percentage%"
+                )
+            }
+        }
+    }
+
+    data class TargetItemCraftedInfo(
+        val slimefunItem: SlimefunItem,
+        val itemToCraft: ItemToCraft,
+        val amount: Int
+    )
 
 }
 
