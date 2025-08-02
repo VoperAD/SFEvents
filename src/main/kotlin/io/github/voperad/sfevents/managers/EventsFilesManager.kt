@@ -35,7 +35,8 @@ object EventsFilesManager {
     }
 
     fun createEvent(fileName: String, type: EventType): BaseConfiguration? {
-        val eventFile = File(eventsFolder, "${fileName}.yml")
+        val sanitizedFileName = sanitizeFilename(fileName)
+        val eventFile = File(eventsFolder, "${sanitizedFileName}.yml")
 
         if (!createEventsFolder() || !createEventFile(eventFile, type)) {
             return null
@@ -75,7 +76,7 @@ object EventsFilesManager {
             log(Level.WARNING, "Event ${file.name} already exists")
             return false
         } catch (e: IOException) {
-            log(Level.SEVERE, "Failed to create event file ${file.name}")
+            log(Level.SEVERE, "Failed to create event file ${file.name}: ${e.message}")
             return false
         }
     }
@@ -87,6 +88,12 @@ object EventsFilesManager {
         }
 
         return true
+    }
+
+    fun sanitizeFilename(input: String, maxLength: Int = 30): String {
+        val invalidChars = "[\\\\/:*?\"<>|\\n\\r\\t\\x00]".toRegex()
+        val sanitized = input.replace(invalidChars, "_")
+        return sanitized.take(maxLength).trimEnd('.')
     }
 
 }
