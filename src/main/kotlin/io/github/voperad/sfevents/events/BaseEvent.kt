@@ -2,15 +2,13 @@ package io.github.voperad.sfevents.events
 
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
+import io.github.voperad.sfevents.debug
 import io.github.voperad.sfevents.events.configs.BaseConfiguration
 import io.github.voperad.sfevents.managers.EventManager
 import io.github.voperad.sfevents.pluginInstance
 import io.github.voperad.sfevents.secondsToTicks
 import io.github.voperad.sfevents.util.ChatUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import org.bukkit.Bukkit
 import org.bukkit.boss.BossBar
 import kotlin.coroutines.CoroutineContext
@@ -24,7 +22,7 @@ abstract class BaseEvent<T : BaseConfiguration>(val config: T) {
     open fun announce() {
         isActive = true
         var counter = 0
-        jobs.add(pluginInstance.launch {
+        launch {
             while (counter < config.announcements) {
                 config.announceMessages.forEach {
                     ChatUtils.broadcast(it,
@@ -40,6 +38,7 @@ abstract class BaseEvent<T : BaseConfiguration>(val config: T) {
             if (allowedPlayerCount >= config.minPlayers) {
                 initBossBar()
                 start()
+                return@launch
             }
 
             ChatUtils.broadcast(config.notEnoughPlayersMessages,
@@ -49,7 +48,7 @@ abstract class BaseEvent<T : BaseConfiguration>(val config: T) {
             )
 
             EventManager.currentEvent = null
-        })
+        }
     }
 
     abstract fun start()
@@ -85,8 +84,20 @@ abstract class BaseEvent<T : BaseConfiguration>(val config: T) {
         start: CoroutineStart = CoroutineStart.DEFAULT,
         block: suspend CoroutineScope.() -> Unit) {
         val job = pluginInstance.launch(context, start, block)
+        debug("New job added on event '${this.config.eventName}'")
         jobs.add(job)
-        job.invokeOnCompletion { jobs.remove(job) }
+        job.invokeOnCompletion { throwable ->
+            val reason = throwable?.let {
+                if (it is CancellationException) {
+                    return@let "Job cancelled normally"
+                }
+
+                return@let "Job failed"
+            } ?: "Job completed normally"
+
+            debug("Job completed on event '${this.config.eventName}'. Reason -> $reason")
+            jobs.remove(job)
+        }
     }
 
 }
