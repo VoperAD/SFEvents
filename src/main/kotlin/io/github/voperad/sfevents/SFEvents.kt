@@ -8,6 +8,7 @@ import io.github.voperad.sfevents.managers.CommandManager
 import io.github.voperad.sfevents.managers.EventsFilesManager
 import io.github.voperad.sfevents.managers.SchedulerManager
 import io.github.voperad.sfevents.tasks.EventSchedulerTask
+import io.github.voperad.sfevents.util.AutoUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
@@ -28,6 +29,7 @@ class SFEvents : AbstractAddon() {
         EventsFilesManager.loadEventsConfigurations()
         CommandManager.setup()
         SchedulerManager.loadEvents()
+        AutoUpdater.initialize(file)
 
         startMetrics()
     }
