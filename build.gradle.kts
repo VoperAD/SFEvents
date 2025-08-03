@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.voperad"
-version = "0.2.0"
+version = "0.2.1"
 
 repositories {
     mavenCentral()
@@ -52,7 +52,7 @@ java {
 
 bukkit {
     name = "SFEvents"
-    version = "0.2.0"
+    version = "0.2.1"
     author = "VoperAD"
     main = "io.github.voperad.sfevents.SFEvents"
     apiVersion = "1.13"
