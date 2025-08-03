@@ -12,18 +12,18 @@ import java.util.logging.Level
 object EventSchedulerTask {
 
     val jobs = mutableListOf<Job>()
-    val eventsExecutions = mutableMapOf<String, ZonedDateTime>()
+    val eventsNextExecution = mutableMapOf<String, ZonedDateTime>()
 
     fun start() {
-        for (scheduledEvent in SchedulerManager.events) {
-            eventsExecutions[scheduledEvent.name] = ExecutionTime.forCron(scheduledEvent.frequency).nextExecution(ZonedDateTime.now()).get()
+        for (event in SchedulerManager.events) {
+            eventsNextExecution[event.name] = ExecutionTime.forCron(event.frequency).nextExecution(ZonedDateTime.now()).get()
         }
 
         jobs.add(pluginInstance.launchAsync {
             debug("Launching EventSchedulerTask...")
             while (true) {
                 execute()
-                delay(1000L)
+                delay(500L)
             }
         })
     }
@@ -35,25 +35,33 @@ object EventSchedulerTask {
 
     private fun execute() {
         debug("Executing EventSchedulerTask...")
+
         for (scheduledEvent in SchedulerManager.events) {
+            eventsNextExecution.putIfAbsent(
+                scheduledEvent.name,
+                ExecutionTime.forCron(scheduledEvent.frequency).nextExecution(ZonedDateTime.now()).get()
+            )
+
             debug("Checking scheduled event '${scheduledEvent.name}'")
-            val now = ZonedDateTime.now()
-            eventsExecutions[scheduledEvent.name]?.let { execution ->
-                debug("Next execution for '${scheduledEvent.name}' is at ${execution.toString()}")
-                if (now.isAfter(execution)) {
-                    debug("Executing scheduled event '${scheduledEvent.name}' at ${now}.")
-                    EventManager.currentEvent?.let {
-                        log(Level.WARNING, "Event '${it.config.eventName}' is already running. Skipping execution for '${scheduledEvent.name}'.")
-                    } ?: run {
-                        EventManager.startEvent(scheduledEvent.name)
-                        info("Starting scheduled event '${scheduledEvent.name}' at ${now}.")
-                    }
-                    eventsExecutions.remove(scheduledEvent.name)
-                }
-            } ?: run {
-                debug("Storing next execution for '${scheduledEvent.name}'")
-                ExecutionTime.forCron(scheduledEvent.frequency).nextExecution(now)?.let { nextExecution ->
-                    eventsExecutions[scheduledEvent.name] = nextExecution.get()
+            val now = ZonedDateTime.now().withSecond(0).withNano(0)
+
+            val execution = eventsNextExecution[scheduledEvent.name]
+                ?.withSecond(0)
+                ?.withNano(0)
+
+            debug("Next execution for '${scheduledEvent.name}' is at $execution")
+
+            if (now.isEqual(execution)) {
+                debug("Executing scheduled event '${scheduledEvent.name}' at $now.")
+                EventManager.currentEvent?.let {
+                    log(
+                        Level.WARNING,
+                        "Event '${it.config.eventName}' is already running. Skipping execution for '${scheduledEvent.name}'."
+                    )
+                } ?: run {
+                    EventManager.startEvent(scheduledEvent.name)
+                    eventsNextExecution.remove(scheduledEvent.name)
+                    info("Starting scheduled event '${scheduledEvent.name}' at $now.")
                 }
             }
         }
