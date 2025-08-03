@@ -50,7 +50,7 @@ object AutoUpdater {
         }
     }
 
-    private fun isAutoUpdateEnabled() = pluginInstance.config.getBoolean("auto-update", false)
+    private fun isAutoUpdateEnabled() = pluginInstance.config.getBoolean("settings.auto-update", false)
 
     private fun getLatestRelease(): Release? {
         return try {
