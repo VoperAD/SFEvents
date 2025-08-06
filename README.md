@@ -7,6 +7,7 @@
     <li><a href="#about-the-addon">About The Project</a></li>
     <li><a href="#requirements">Requirements</a></li>
     <li><a href="#commands">Commands</a></li>
+    <li><a href="#basic-instructions">Basic Instructions</a></li>
     <li><a href="#donate">Donate</a></li>
   </ol>
 </details>
@@ -23,6 +24,7 @@ a Slimefun item. In the future, I plan to add more events, such as a Clan versio
 can compete in crafting items for their clans. Feel free to suggest any other events you would like to see in this addon!
 
 > I created this addon mainly to practice my Kotlin skills :)
+
 
 ## Requirements
 
@@ -44,6 +46,14 @@ can compete in crafting items for their clans. Feel free to suggest any other ev
 |                 /sfevents event cancel                 | sfevents.admin.cancelevent  |                Manually cancel the current event running                 |
 | /sfevents event create \<eventType\> \<eventFileName\> | sfevents.admin.createevent  | Create a new event file with the given name for the specified event type |
 
+## Basic Instructions
+
+As said before, the addon currently has only one event — the Crafting Event.
+
+All events are stored in a folder called `events`, which is located inside SFEvents folder. Using the command `/sfevents event create <eventType> <eventFileName>`,
+you can create a new event file with the specified name and type. Then, you can edit the file to customize the event.
+
+Also, it is possible to schedule events to run at specific times using the `scheduler` field in the **config.yml** file.
 
 ## Donate
 
